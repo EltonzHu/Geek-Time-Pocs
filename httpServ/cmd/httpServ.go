@@ -5,14 +5,43 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 )
+
+const undefined = "undefined, build process will set it"
+
+var (
+	// Version of Go toolchain that produces this build
+	goVersion = runtime.Version()
+	// Platform for which this build was produced
+	goPlatform = fmt.Sprintf("%s:%s", runtime.GOOS, runtime.GOARCH)
+
+	// // Version of this build
+	// srcVersion = undefined
+	// SHA string of the scm commit of this build
+	commitHash = undefined
+	// SCM branch of this build
+	scmBranch = undefined
+	// Date this build was produced
+	buildDate = undefined
+)
+
+func buildInfo() {
+	fmt.Printf("\nStarting Http Server,"+
+		"Go version: %s\n"+
+		"Go platform: %s\n"+
+		"Commit hash: %s\n"+
+		"Scm branch: %s\n"+
+		"Build date: %s\n\n",
+		goVersion, goPlatform, commitHash, scmBranch, buildDate)
+}
 
 func main() {
 	// For simplity, use console output for now instead of using glog lib dependencies.
 	// - Elton Hu (Oct.8, 2022)
 	// flag.Set("v", 1)
 	// glog.V(2).Info("Starting http server")
-	fmt.Println("Starting http server")
+	buildInfo()
 
 	// In future, we can split this into differnt service layers from the mux.
 	// - Elton Hu (Oct.8, 2022)
