@@ -22,9 +22,9 @@ spec:
             - name: VERSION
               valueFrom:
                 configMapKeyRef:
-                  name: httpserv-cm
+                  name: httpserver-cm
                   key: VERSION
-          resources:             #资源请求
+          resources:             
             limits:
               cpu: 100m
               memory: 200Mi
