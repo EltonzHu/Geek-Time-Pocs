@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
+	"time"
+
+	"github.com/golang/glog"
 )
 
 const undefined = "undefined, build process will set it"
@@ -50,12 +55,34 @@ func main() {
 	mux.HandleFunc("/tasks/v1/copyEnvVersion", copyEnvVersionHanlder)
 	mux.HandleFunc("/tasks/v1/log", logHandler)
 	mux.HandleFunc("/healthz", healthProbHandler)
-	err := http.ListenAndServe(":8081", mux)
 
-	if err != nil {
-		log.Fatal(err)
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", 8081),
+		Handler: mux,
 	}
 
+	// Adding proper termination support
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, os.Kill, syscall.SIGTERM)
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			glog.Fatalln("http server error, ", err.Error())
+		}
+	}()
+
+	<-quit
+
+	glog.Infoln("shutdown server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		glog.Errorln("Server shutdown: ", err)
+	} else {
+		glog.Infoln("Server has been shutdown succesfully")
+	}
 }
 
 // Service handler section
