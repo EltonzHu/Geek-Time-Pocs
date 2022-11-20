@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: httpserver
+  template:
+    metadata:
+      labels:
+        app: httpserver
+    spec:
+      containers:
+        - name: httpserver
+          imagePullPolicy: Always
+          image: httpserver:v2.0
+          ports:
+            - containerPort: 80
+          env:
+            - name: VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: httpserv-cm
+                  key: VERSION
+          resources:             #资源请求
+            limits:
+              cpu: 100m
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 30       
+            timeoutSeconds: 2       
+            successThreshold: 1     
+            failureThreshold: 3     
+          livenessProbe:
+            httpGet: 
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 30  
+            periodSeconds: 30       
+            timeoutSeconds: 2       
+            successThreshold: 1    
+            failureThreshold: 3    
+      terminationGracePeriodSeconds: 60
+
+      # lifecycle:
+      #   postStart:
+      #     exec:
+      #       command: ["/bin/sh", "-c", "echo Hello from the postStart handler"]
+      #   preStop:
+      #     exec:
+      #       command: ["/bin/sh", "-c", "while killall -15 httpserver; do sleep 2; done"]
